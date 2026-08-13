@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-08-13 (3)
+
+- Rewrote extraction logic for Copilot's current UI (Fluent/`scriptor`
+  components) — old selectors matched nothing, silently dropping into a
+  fallback that lost code blocks and headings.
+  - User turns: `div[id^="user-message-"] [data-testid="chatOutput"]`
+  - Code blocks: `.scriptor-component-code-block`, extracted via
+    `[data-line-index]` and fenced with the `#language-badge` language
+  - Auto-clicks "Show more lines" to defeat code-block virtualization
+    before extracting, so long snippets aren't truncated
+  - Headings (`h1`-`h6`) now preserved as Markdown headings
+
 ## 2026-08-13 (2)
 
 - Fixed `ReferenceError: copy is not defined` in the bookmarklet — `copy()`

@@ -48,10 +48,17 @@ entirety, paste it into the console prompt, and press **Enter**.
 
 ## Troubleshooting
 
-* **No messages found / empty export** — Copilot's UI markup changed since
-  this script was last updated. The script falls back to grabbing all
-  paragraph/list/code text on the page, but sender labels will be lost.
-  Open an issue with the page's current markup if you can.
+* **No messages found / empty export** — logs a console warning
+  (`No chat content found...`) if none of `[data-testid="chatOutput"]`,
+  `.scriptor-component-code-block`, or `p`/`ul`/`ol`/heading tags match
+  anything under `<main>`. Means Copilot changed its markup again — grab
+  fresh selectors via DevTools → Inspect on a message and a code block, see
+  [`src/export-chat.js`](../src/export-chat.js) for where they're used.
+* **Code blocks missing or truncated** — Copilot's code editor renders one
+  `<div data-line-index>` per line and virtualizes long blocks (only visible
+  lines exist in the DOM). The script clicks through the "Show more lines"
+  control before reading each block; if that control's `aria-label` changes,
+  extraction silently stops early.
 * **Clipboard write fails / permission prompt** — the script uses
   `navigator.clipboard.writeText()`, which requires a secure context
   (`https://`, which Copilot is) and may prompt for clipboard permission the

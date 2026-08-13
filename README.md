@@ -1,91 +1,51 @@
-# Guide: How to Export Microsoft Copilot Chat Transcripts
+# Export Microsoft Copilot Chat Transcripts
 
-This guide provides step-by-step instructions for extracting a full Microsoft Copilot conversation transcript into Markdown format using your web browser's Developer Tools.
+Enterprise Copilot deployments sometimes disable native chat export for
+security reasons. This is a small workaround: a browser-console script that
+pulls the current chat transcript out of the page DOM and copies it to your
+clipboard as Markdown, so you can drop it into an email, doc, or Teams
+message when you need to share a work-related conversation with a boss or
+colleague.
 
----
+## Quick Start
 
-## Prerequisites
+Pick one:
 
-* **Browser:** Microsoft Edge, Google Chrome, or any Chromium-based browser.
-* **Access:** Open the Microsoft Copilot chat session you wish to export in your active browser window.
+- **One click (recommended for sharing):** see [bookmarklet.md](bookmarklet.md)
+- **Console paste:** copy [`src/export-chat.js`](src/export-chat.js), paste
+  into DevTools console (`F12` → Console tab) on your open Copilot chat,
+  press Enter. Full walkthrough in [docs/USAGE.md](docs/USAGE.md).
 
----
+Either way, the transcript ends up on your clipboard as Markdown, ready to
+paste.
 
-## Step-by-Step Instructions
-
-### Step 1: Open Browser Developer Tools
-
-1. Open your active Copilot conversation in the browser.
-2. Press **`F12`** (or **`Ctrl + Shift + I`** on Windows) to open Developer Tools.
-3. Select the **Console** tab at the top of the Developer Tools panel.
-
----
-
-### Step 2: Bypass Browser Anti-Pasting Security Protection
-
-Chromium browsers include a security feature (Self-XSS protection) that blocks users from pasting code into the console until explicitly allowed.
-
-1. If you attempt to paste code, a yellow warning message will appear:
-> *Warning: Don’t paste code into the DevTools Console that you don’t understand... Please type “allow pasting” below and press Enter to allow pasting.*
-
-
-2. Type the following text directly into the console prompt:
-```text
-allow pasting
+## Repo Layout
 
 ```
-
-
-3. Press **Enter**. (You only need to perform this step once per browser profile/session).
-
----
-
-### Step 3: Copy and Paste the Extraction Script
-
-Copy the following JavaScript snippet in its entirety:
-
-```javascript
-(() => {
-  // Query message containers across Copilot UI revisions
-  const messageElements = document.querySelectorAll(
-    '[data-content="user-message"], [data-content="ai-message"], ' +
-    '[class*="user-message"], [class*="bot-message"], ' +
-    'c-chat-message, gds-chat-message, [class*="chat-turn"]'
-  );
-
-  let exportText = `# Copilot Chat Export - ${new Date().toLocaleString()}\n\n`;
-
-  if (messageElements.length === 0) {
-    // Fallback traversal if specific selectors update
-    const mainContent = document.querySelector('main') || document.body;
-    const paragraphs = Array.from(mainContent.querySelectorAll('p, pre, code, ul, ol'))
-      .map(el => el.innerText.trim())
-      .filter(text => text.length > 0);
-    
-    exportText += paragraphs.join('\n\n');
-  } else {
-    messageElements.forEach((el) => {
-      const isUser = el.matches('[data-content="user-message"], [class*="user"]') || 
-                     el.getAttribute('data-author') === 'user';
-      const sender = isUser ? "### User" : "### Copilot";
-      exportText += `${sender}\n${el.innerText.trim()}\n\n---\n\n`;
-    });
-  }
-
-  // Copy structured Markdown directly to system clipboard
-  copy(exportText);
-  console.log("Success! Transcript copied to clipboard in Markdown format.");
-})();
-
+src/export-chat.js   — the extraction script (source of truth)
+bookmarklet.md        — one-click javascript: URI version + install steps
+docs/USAGE.md          — full step-by-step, incl. DevTools/Self-XSS notes
+CHANGELOG.md           — notable changes, esp. when Copilot's UI shifts
 ```
 
-Paste the code into the console prompt and press **Enter**.
+## How It Works
 
----
+Copilot's UI doesn't expose an export button in restricted tenants, but the
+transcript still lives in the DOM. The script queries known message-
+container selectors, walks each turn, tags it `### User` / `### Copilot`,
+and copies the resulting Markdown via the console's `copy()` helper. If
+Microsoft changes the markup and no selectors match, it falls back to
+grabbing all visible paragraph/list/code text on the page.
 
-### Step 4: Save Your Transcript
+## Caveats
 
-1. Once executed, you will see the confirmation message:
-`Success! Transcript copied to clipboard in Markdown format.`
-2. Open your preferred application (e.g., VS Code, OneNote, Microsoft Word, Notepad, or Teams).
-3. Press **`Ctrl + V`** to paste the complete structured transcript.
+- Selectors are reverse-engineered from the current Copilot web UI and will
+  break when Microsoft ships a redesign. If your export comes back empty,
+  check [docs/USAGE.md](docs/USAGE.md#troubleshooting).
+- Only pull transcripts you're authorized to share — this is a convenience
+  tool, not a bypass of any access control on the conversation content
+  itself.
+
+## License
+
+See [LICENSE](LICENSE).

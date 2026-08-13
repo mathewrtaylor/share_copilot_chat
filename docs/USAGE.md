@@ -52,6 +52,8 @@ entirety, paste it into the console prompt, and press **Enter**.
   this script was last updated. The script falls back to grabbing all
   paragraph/list/code text on the page, but sender labels will be lost.
   Open an issue with the page's current markup if you can.
-* **`copy is not defined`** — you're not running this in a Chromium DevTools
-  console (Firefox/Safari don't expose the `copy()` helper the same way).
-  Select the logged text manually instead.
+* **Clipboard write fails / permission prompt** — the script uses
+  `navigator.clipboard.writeText()`, which requires a secure context
+  (`https://`, which Copilot is) and may prompt for clipboard permission the
+  first time. If it's denied or unsupported, the script logs the full
+  Markdown text to the console instead — select and copy it manually.

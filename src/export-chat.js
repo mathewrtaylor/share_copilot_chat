@@ -25,7 +25,13 @@
     });
   }
 
-  // Copy structured Markdown directly to system clipboard
-  copy(exportText);
-  console.log("Success! Transcript copied to clipboard in Markdown format.");
+  // Copy structured Markdown directly to system clipboard.
+  // navigator.clipboard works in both the DevTools console and page context
+  // (bookmarklets); the DevTools-only `copy()` helper does not.
+  navigator.clipboard.writeText(exportText).then(() => {
+    console.log("Success! Transcript copied to clipboard in Markdown format.");
+  }).catch((err) => {
+    console.error("Clipboard write failed, logging text instead:", err);
+    console.log(exportText);
+  });
 })();
